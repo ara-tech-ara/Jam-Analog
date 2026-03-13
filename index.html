@@ -1,42 +1,82 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Jam Analog</title>
+  <title>Jam Analog & Digital</title>
   <style>
-    canvas { background: #f0f0f0; display:block; margin:auto; }
+    body { text-align: center; font-family: Arial, sans-serif; }
+    canvas { background: #fff; display:block; margin:auto; }
+    #digital { font-size: 20px; margin-top: 10px; }
   </style>
 </head>
 <body>
   <canvas id="clock" width="300" height="300"></canvas>
+  <div id="digital"></div>
+
   <script>
     const canvas = document.getElementById("clock");
     const ctx = canvas.getContext("2d");
+    const digital = document.getElementById("digital");
+
     function drawClock(){
       const now = new Date();
       const sec = now.getSeconds();
       const min = now.getMinutes();
       const hr = now.getHours();
+
       ctx.clearRect(0,0,300,300);
+
+      // lingkaran jam
       ctx.beginPath();
       ctx.arc(150,150,140,0,2*Math.PI);
       ctx.stroke();
+
+      // angka 1-12
+      ctx.font = "16px Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      for(let num=1; num<=12; num++){
+        let ang = num * Math.PI/6;
+        let x = 150 + Math.cos(ang - Math.PI/2) * 120;
+        let y = 150 + Math.sin(ang - Math.PI/2) * 120;
+        ctx.fillText(num.toString(), x, y);
+      }
+
       // jarum jam
-      ctx.moveTo(150,150);
-      ctx.lineTo(150+60*Math.cos((hr%12)*30*Math.PI/180 - Math.PI/2),
-                 150+60*Math.sin((hr%12)*30*Math.PI/180 - Math.PI/2));
-      ctx.stroke();
+      let hrAng = ((hr%12) + min/60) * Math.PI/6;
+      drawHand(hrAng, 70, 6, "black");
+
       // jarum menit
-      ctx.moveTo(150,150);
-      ctx.lineTo(150+90*Math.cos(min*6*Math.PI/180 - Math.PI/2),
-                 150+90*Math.sin(min*6*Math.PI/180 - Math.PI/2));
-      ctx.stroke();
+      let minAng = (min + sec/60) * Math.PI/30;
+      drawHand(minAng, 100, 4, "black");
+
       // jarum detik
-      ctx.moveTo(150,150);
-      ctx.lineTo(150+100*Math.cos(sec*6*Math.PI/180 - Math.PI/2),
-                 150+100*Math.sin(sec*6*Math.PI/180 - Math.PI/2));
-      ctx.strokeStyle="red"; ctx.stroke();
-      ctx.strokeStyle="black";
+      let secAng = sec * Math.PI/30;
+      drawHand(secAng, 110, 2, "red");
+
+      // jam digital + hari + tanggal
+      const days = ["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"];
+      const months = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+      let dayName = days[now.getDay()];
+      let date = now.getDate();
+      let monthName = months[now.getMonth()];
+      let year = now.getFullYear();
+
+      let digitalTime = `${hr.toString().padStart(2,'0')}:${min.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
+      let fullDate = `${dayName}, ${date} ${monthName} ${year}`;
+
+      digital.innerHTML = digitalTime + "<br>" + fullDate;
     }
+
+    function drawHand(angle, length, width, color){
+      ctx.beginPath();
+      ctx.lineWidth = width;
+      ctx.strokeStyle = color;
+      ctx.moveTo(150,150);
+      ctx.lineTo(150 + length*Math.cos(angle - Math.PI/2),
+                 150 + length*Math.sin(angle - Math.PI/2));
+      ctx.stroke();
+    }
+
     setInterval(drawClock,1000);
   </script>
 </body>
