@@ -10,10 +10,9 @@
       color: #333;
     }
     canvas {
-      background: #fff;
       display: block;
       margin: 30px auto;
-      border: 10px solid #000000;
+      border: 10px solid #000000; /* lingkaran luar hitam */
       border-radius: 50%;
       box-shadow: 0 0 25px rgba(0,0,0,0.3);
     }
@@ -29,7 +28,7 @@
   </style>
 </head>
 <body>
-  <canvas id="clock" width="380" height="380"></canvas>
+  <canvas id="clock" width="400" height="400"></canvas>
   <div id="digital"></div>
   <div id="date"></div>
 
@@ -42,27 +41,51 @@
     function drawClock(){
       const now = new Date();
       const ms = now.getMilliseconds();
-      const sec = now.getSeconds() + ms/1000; // detik halus
+      const sec = now.getSeconds() + ms/1000;
       const min = now.getMinutes() + sec/60;
       const hr = now.getHours() + min/60;
 
-      ctx.clearRect(0,0,380,380);
+      ctx.clearRect(0,0,400,400);
 
-      // lingkaran jam
+      // background gradasi putih ke abu
+      let grad = ctx.createRadialGradient(200,200,50,200,200,200);
+      grad.addColorStop(0,"#ffffff");
+      grad.addColorStop(1,"#e0e0e0");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0,0,400,400);
+
+      // lingkaran luar hitam
       ctx.beginPath();
-      ctx.arc(190,190,170,0,2*Math.PI);
+      ctx.arc(200,200,180,0,2*Math.PI);
+      ctx.strokeStyle = "black";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // highlight putih tipis di lingkaran luar (efek kaca)
+      let highlight = ctx.createLinearGradient(200,20,200,100);
+      highlight.addColorStop(0,"rgba(255,255,255,0.8)");
+      highlight.addColorStop(1,"rgba(255,255,255,0)");
+      ctx.beginPath();
+      ctx.arc(200,200,180,Math.PI*1.05,Math.PI*1.95); // highlight di atas
+      ctx.strokeStyle = highlight;
+      ctx.lineWidth = 6;
+      ctx.stroke();
+
+      // lingkaran dalam
+      ctx.beginPath();
+      ctx.arc(200,200,160,0,2*Math.PI);
       ctx.strokeStyle = "black";
       ctx.stroke();
 
-      // garis menit/jam
+      // garis menit/jam rapat ke luar
       for(let i=0; i<60; i++){
         let ang = i * Math.PI/30;
-        let inner = (i % 5 === 0) ? 160 : 165;
-        let outer = 170;
-        let x1 = 190 + Math.cos(ang - Math.PI/2) * inner;
-        let y1 = 190 + Math.sin(ang - Math.PI/2) * inner;
-        let x2 = 190 + Math.cos(ang - Math.PI/2) * outer;
-        let y2 = 190 + Math.sin(ang - Math.PI/2) * outer;
+        let inner = (i % 5 === 0) ? 165 : 170;
+        let outer = 180;
+        let x1 = 200 + Math.cos(ang - Math.PI/2) * inner;
+        let y1 = 200 + Math.sin(ang - Math.PI/2) * inner;
+        let x2 = 200 + Math.cos(ang - Math.PI/2) * outer;
+        let y2 = 200 + Math.sin(ang - Math.PI/2) * outer;
         ctx.beginPath();
         ctx.moveTo(x1,y1);
         ctx.lineTo(x2,y2);
@@ -71,8 +94,8 @@
         ctx.stroke();
       }
 
-      // angka jam
-      ctx.font = "bold 28px Arial";
+      // angka jam besar & tebal
+      ctx.font = "bold 30px Arial";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillStyle = "black";
@@ -82,21 +105,21 @@
       ctx.shadowOffsetY = 2;
       for(let num=1; num<=12; num++){
         let ang = num * Math.PI/6;
-        let x = 190 + Math.cos(ang - Math.PI/2) * 145;
-        let y = 190 + Math.sin(ang - Math.PI/2) * 145;
+        let x = 200 + Math.cos(ang - Math.PI/2) * 150;
+        let y = 200 + Math.sin(ang - Math.PI/2) * 150;
         ctx.fillText(num.toString(), x, y);
       }
       ctx.shadowColor = "transparent";
 
-      // jarum jam
+      // jarum jam halus + gradasi + bayangan
       let hrAng = hr * Math.PI/6;
-      drawHand(hrAng, 90, 6, "black");
+      drawHand(hrAng, 95, 6, true);
 
-      // jarum menit
+      // jarum menit halus + gradasi + bayangan
       let minAng = min * Math.PI/30;
-      drawHand(minAng, 130, 4, "black");
+      drawHand(minAng, 140, 4, true);
 
-      // jarum detik dengan glow halus
+      // jarum detik dengan glow
       let secAng = sec * Math.PI/30;
       ctx.beginPath();
       ctx.lineWidth = 2;
@@ -105,14 +128,14 @@
       ctx.shadowBlur = 8;
       ctx.shadowOffsetX = 0;
       ctx.shadowOffsetY = 0;
-      ctx.moveTo(190,190);
-      ctx.lineTo(190 + 150*Math.cos(secAng - Math.PI/2),
-                 190 + 150*Math.sin(secAng - Math.PI/2));
+      ctx.moveTo(200,200);
+      ctx.lineTo(200 + 160*Math.cos(secAng - Math.PI/2),
+                 200 + 160*Math.sin(secAng - Math.PI/2));
       ctx.stroke();
 
       // titik pusat merah dengan glow
       ctx.beginPath();
-      ctx.arc(190,190,6,0,2*Math.PI);
+      ctx.arc(200,200,7,0,2*Math.PI);
       ctx.fillStyle = "red";
       ctx.fill();
 
@@ -134,17 +157,32 @@
       digital.innerHTML = digitalTime;
       dateDiv.innerHTML = fullDate;
 
-      requestAnimationFrame(drawClock); // animasi halus
+      requestAnimationFrame(drawClock);
     }
 
-    function drawHand(angle, length, width, color){
+    function drawHand(angle, length, width, withGradient=false){
       ctx.beginPath();
       ctx.lineWidth = width;
-      ctx.strokeStyle = color;
-      ctx.moveTo(190,190);
-      ctx.lineTo(190 + length*Math.cos(angle - Math.PI/2),
-                 190 + length*Math.sin(angle - Math.PI/2));
+      if(withGradient){
+        let grad = ctx.createLinearGradient(200,200,
+          200 + length*Math.cos(angle - Math.PI/2),
+          200 + length*Math.sin(angle - Math.PI/2));
+        grad.addColorStop(0,"#000000"); // hitam
+        grad.addColorStop(1,"#555555"); // abu gelap
+        ctx.strokeStyle = grad;
+        ctx.shadowColor = "rgba(0,0,0,0.4)";
+        ctx.shadowBlur = 4;
+        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetY = 2;
+      } else {
+        ctx.strokeStyle = "black";
+      }
+      ctx.moveTo(200,200);
+      ctx.lineTo(200 + length*Math.cos(angle - Math.PI/2),
+                 200 + length*Math.sin(angle - Math.PI/2));
       ctx.stroke();
+      ctx.shadowColor = "transparent";
+      ctx.shadowBlur = 0;
     }
 
     requestAnimationFrame(drawClock);
