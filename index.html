@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Jam Otomatis Syakila - Lokasi Realtime</title>
+  <title>Jam Syakila - Standar KEMENAG</title>
   <style>
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body {
@@ -11,16 +11,17 @@
       min-height: 100vh; font-family: 'Segoe UI', Roboto, sans-serif;
       background: linear-gradient(135deg, #74ebd5 0%, #ACB6E5 100%); color: #333;
     }
-    .clock-wrapper { width: 100%; max-width: 380px; aspect-ratio: 1 / 1; position: relative; margin: 20px 0; }
+    .clock-wrapper { width: 100%; max-width: 380px; aspect-ratio: 1 / 1; position: relative; margin: 15px 0; }
     canvas { width: 100%; height: 100%; display: block; background-color: #fff; border: 10px solid #2c3e50; border-radius: 50%; box-shadow: 0 15px 40px rgba(0,0,0,0.25); }
     .info-card { width: 100%; max-width: 380px; background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(10px); border-radius: 20px; padding: 20px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
     #digital { font-size: 2.2rem; font-weight: 800; color: #2c3e50; margin: 0; font-variant-numeric: tabular-nums; }
-    #date, #location-name { font-size: 0.9rem; color: #5d6d7e; margin-top: 5px; }
-    #location-name { font-style: italic; color: #3498db; }
+    #date, #location-name { font-size: 0.85rem; color: #5d6d7e; margin-top: 5px; }
+    #location-name { color: #3498db; font-weight: bold; }
     hr { border: 0; border-top: 1px solid rgba(0,0,0,0.1); margin: 15px 0; }
     .prayer-container { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.9rem; }
-    .next-prayer { grid-column: span 2; background: #e74c3c; color: white; padding: 8px; border-radius: 10px; font-weight: bold; margin-bottom: 5px; }
-    .prayer-row { display: flex; justify-content: space-between; padding: 2px 10px; border-bottom: 1px solid rgba(0,0,0,0.05); }
+    .next-prayer { grid-column: span 2; background: #e74c3c; color: white; padding: 8px; border-radius: 10px; font-weight: bold; margin-bottom: 5px; animation: pulse 2s infinite; }
+    .prayer-row { display: flex; justify-content: space-between; padding: 4px 10px; border-bottom: 1px solid rgba(0,0,0,0.05); }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
   </style>
 </head>
 <body>
@@ -32,10 +33,10 @@
   <div class="info-card">
     <p id="digital">00:00:00</p>
     <p id="date">Memuat Tanggal...</p>
-    <p id="location-name">Mencari Lokasi...</p>
+    <p id="location-name">Mendeteksi Lokasi...</p>
     <hr>
     <div id="prayer-times" class="prayer-container">
-      <div style="grid-column: span 2;">Mengambil Jadwal Sholat...</div>
+      <div style="grid-column: span 2;">Sinkronisasi KEMENAG...</div>
     </div>
   </div>
 
@@ -47,7 +48,7 @@
     const locationDiv = document.getElementById("location-name");
     const prayerDiv = document.getElementById("prayer-times");
 
-    // --- 1. LOGIKA JAM ANALOG & DIGITAL ---
+    // 1. Gambar Jam
     function drawClock() {
       const now = new Date();
       const ms = now.getMilliseconds();
@@ -58,19 +59,18 @@
       ctx.clearRect(0, 0, 800, 800);
       const cx = 400, cy = 400, radius = 370;
 
-      // Penanda & Angka
       for(let i=0; i<60; i++) {
         let ang = i * Math.PI/30;
         let isHour = i % 5 === 0;
         ctx.beginPath();
-        ctx.lineWidth = isHour ? 10 : 4;
+        ctx.lineWidth = isHour ? 12 : 4;
         ctx.strokeStyle = isHour ? "#2c3e50" : "#bdc3c7";
         ctx.moveTo(cx + Math.cos(ang) * (radius - 5), cy + Math.sin(ang) * (radius - 5));
         ctx.lineTo(cx + Math.cos(ang) * (radius - (isHour ? 35 : 15)), cy + Math.sin(ang) * (radius - (isHour ? 35 : 15)));
         ctx.stroke();
       }
 
-      ctx.font = "bold 60px Arial";
+      ctx.font = "bold 65px Arial";
       ctx.fillStyle = "#2c3e50";
       ctx.textAlign = "center"; ctx.textBaseline = "middle";
       for(let num=1; num<=12; num++) {
@@ -82,12 +82,10 @@
       ctx.fillStyle = "#95a5a6";
       ctx.fillText("Syakila Azzahra P", cx, cy + 110);
 
-      // Jarum
       drawHand((hr * Math.PI/6) - Math.PI/2, 220, 18, "#2c3e50");
       drawHand((min * Math.PI/30) - Math.PI/2, 310, 10, "#34495e");
       drawHand((sec * Math.PI/30) - Math.PI/2, 340, 5, "#e74c3c");
 
-      // Titik Tengah
       ctx.beginPath(); ctx.arc(cx, cy, 15, 0, 2*Math.PI); ctx.fillStyle = "#2c3e50"; ctx.fill();
       ctx.beginPath(); ctx.arc(cx, cy, 6, 0, 2*Math.PI); ctx.fillStyle = "#e74c3c"; ctx.fill();
 
@@ -104,16 +102,18 @@
       ctx.stroke();
     }
 
-    // --- 2. LOGIKA LOKASI & API JADWAL SHOLAT ---
+    // 2. Logika API dengan Parameter KEMENAG (Subuh 20, Isya 18)
     async function getPrayerTimes() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(async (position) => {
           const lat = position.coords.latitude;
           const lng = position.coords.longitude;
-          locationDiv.innerText = `Koordinat: ${lat.toFixed(2)}, ${lng.toFixed(2)}`;
+          locationDiv.innerText = `Lokasi: ${lat.toFixed(2)}, ${lng.toFixed(2)} (KEMENAG RI)`;
 
           try {
-            const response = await fetch(`https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lng}&method=20`);
+            // Menggunakan method=custom dengan tuning Subuh 20 & Isya 18
+            const url = `https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lng}&method=99&methodSettings=20,null,18`;
+            const response = await fetch(url);
             const data = await response.json();
             const timings = data.data.timings;
             
@@ -125,19 +125,17 @@
               Isya: timings.Isha
             });
           } catch (err) {
-            prayerDiv.innerHTML = "Gagal mengambil data API.";
+            prayerDiv.innerHTML = "Gagal memuat API.";
           }
         }, () => {
-          locationDiv.innerText = "Lokasi ditolak. Menggunakan estimasi Jakarta.";
+          locationDiv.innerText = "GPS Mati. Menggunakan Jakarta (KEMENAG).";
           fetchDefaultJakarta();
         });
-      } else {
-        locationDiv.innerText = "Browser tidak dukung GPS.";
       }
     }
 
     async function fetchDefaultJakarta() {
-      // Fallback jika GPS dimatikan (Jakarta)
+      // Default Jakarta dengan standar Kemenag (method 20)
       const res = await fetch(`https://api.aladhan.com/v1/timingsByCity?city=Jakarta&country=Indonesia&method=20`);
       const data = await res.json();
       const t = data.data.timings;
@@ -150,23 +148,29 @@
       let html = "";
       let foundNext = false;
 
-      for (let [name, time] of Object.entries(times)) {
+      const entries = Object.entries(times);
+      for (let [name, time] of entries) {
         let [h, m] = time.split(":").map(Number);
         let pMin = h * 60 + m;
 
         if (!foundNext && pMin > currentMin) {
-          html += `<div class="next-prayer">Selanjutnya: ${name} (${time})</div>`;
+          html += `<div class="next-prayer">Berikutnya: ${name} (${time})</div>`;
           foundNext = true;
         } else {
           html += `<div class="prayer-row"><span>${name}</span> <span>${time}</span></div>`;
         }
       }
+      
+      // Jika semua waktu sholat hari ini sudah lewat, highlight Subuh besok
+      if(!foundNext) {
+        html = `<div class="next-prayer">Berikutnya: Subuh (${times.Subuh})</div>` + html;
+      }
+
       prayerDiv.innerHTML = html;
     }
 
-    // Jalankan pertama kali
     getPrayerTimes();
-    setInterval(getPrayerTimes, 1800000); // Perbarui API setiap 30 menit
+    setInterval(getPrayerTimes, 1800000); 
     requestAnimationFrame(drawClock);
   </script>
 </body>
