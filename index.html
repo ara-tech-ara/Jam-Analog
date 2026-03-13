@@ -54,21 +54,10 @@
       ctx.fillStyle = grad;
       ctx.fillRect(0,0,400,400);
 
-      // lingkaran luar hitam
+      // lingkaran luar
       ctx.beginPath();
       ctx.arc(200,200,180,0,2*Math.PI);
       ctx.strokeStyle = "black";
-      ctx.lineWidth = 3;
-      ctx.stroke();
-
-      // highlight putih tipis di lingkaran luar (efek kaca)
-      let highlight = ctx.createLinearGradient(200,20,200,100);
-      highlight.addColorStop(0,"rgba(255,255,255,0.8)");
-      highlight.addColorStop(1,"rgba(255,255,255,0)");
-      ctx.beginPath();
-      ctx.arc(200,200,180,Math.PI*1.05,Math.PI*1.95); // highlight di atas
-      ctx.strokeStyle = highlight;
-      ctx.lineWidth = 6;
       ctx.stroke();
 
       // lingkaran dalam
@@ -111,13 +100,13 @@
       }
       ctx.shadowColor = "transparent";
 
-      // jarum jam halus + gradasi + bayangan
+      // jarum jam halus + bayangan
       let hrAng = hr * Math.PI/6;
-      drawHand(hrAng, 95, 6, true);
+      drawHand(hrAng, 95, 6, "black", true);
 
-      // jarum menit halus + gradasi + bayangan
+      // jarum menit halus + bayangan
       let minAng = min * Math.PI/30;
-      drawHand(minAng, 140, 4, true);
+      drawHand(minAng, 140, 4, "black", true);
 
       // jarum detik dengan glow
       let secAng = sec * Math.PI/30;
@@ -160,29 +149,24 @@
       requestAnimationFrame(drawClock);
     }
 
-    function drawHand(angle, length, width, withGradient=false){
+    function drawHand(angle, length, width, color, withShadow=false){
       ctx.beginPath();
       ctx.lineWidth = width;
-      if(withGradient){
-        let grad = ctx.createLinearGradient(200,200,
-          200 + length*Math.cos(angle - Math.PI/2),
-          200 + length*Math.sin(angle - Math.PI/2));
-        grad.addColorStop(0,"#000000"); // hitam
-        grad.addColorStop(1,"#555555"); // abu gelap
-        ctx.strokeStyle = grad;
+      ctx.strokeStyle = color;
+      if(withShadow){
         ctx.shadowColor = "rgba(0,0,0,0.4)";
         ctx.shadowBlur = 4;
         ctx.shadowOffsetX = 2;
         ctx.shadowOffsetY = 2;
-      } else {
-        ctx.strokeStyle = "black";
       }
       ctx.moveTo(200,200);
       ctx.lineTo(200 + length*Math.cos(angle - Math.PI/2),
                  200 + length*Math.sin(angle - Math.PI/2));
       ctx.stroke();
-      ctx.shadowColor = "transparent";
-      ctx.shadowBlur = 0;
+      if(withShadow){
+        ctx.shadowColor = "transparent";
+        ctx.shadowBlur = 0;
+      }
     }
 
     requestAnimationFrame(drawClock);
