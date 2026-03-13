@@ -3,102 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Jam Analog Syakila - Full Responsive</title>
+  <title>Jam Otomatis Syakila - Lokasi Realtime</title>
   <style>
-    /* Reset & Background */
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
-
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body {
-      margin: 0;
-      padding: 15px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      min-height: 100vh;
-      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      background: linear-gradient(135deg, #74ebd5 0%, #ACB6E5 100%);
-      color: #333;
+      margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center;
+      min-height: 100vh; font-family: 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #74ebd5 0%, #ACB6E5 100%); color: #333;
     }
-
-    /* KUNCI AGAR TIDAK LONJONG: Container dengan aspect-ratio */
-    .clock-wrapper {
-      width: 100%;
-      max-width: 380px; /* Ukuran maksimal jam */
-      aspect-ratio: 1 / 1; /* Memaksa tinggi selalu sama dengan lebar */
-      position: relative;
-      margin: 20px 0;
-    }
-
-    canvas {
-      width: 100%;
-      height: 100%;
-      display: block;
-      background-color: #ffffff;
-      border: 10px solid #2c3e50;
-      border-radius: 50%;
-      box-shadow: 0 15px 40px rgba(0,0,0,0.25);
-    }
-
-    /* Panel Info Digital & Sholat */
-    .info-card {
-      width: 100%;
-      max-width: 380px;
-      background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(10px);
-      border-radius: 20px;
-      padding: 20px;
-      text-align: center;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    }
-
-    #digital {
-      font-size: 2.2rem;
-      font-weight: 800;
-      color: #2c3e50;
-      margin: 0;
-      font-variant-numeric: tabular-nums;
-    }
-
-    #date {
-      font-size: 1rem;
-      color: #5d6d7e;
-      margin-top: 5px;
-      font-weight: 500;
-    }
-
-    hr {
-      border: 0;
-      border-top: 1px solid rgba(0,0,0,0.1);
-      margin: 15px 0;
-    }
-
-    .prayer-container {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      font-size: 0.95rem;
-    }
-
-    .next-prayer-highlight {
-      grid-column: span 2;
-      background: #e74c3c;
-      color: white;
-      padding: 8px;
-      border-radius: 10px;
-      font-weight: bold;
-      margin-bottom: 5px;
-      box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3);
-    }
-
-    .prayer-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 2px 10px;
-    }
+    .clock-wrapper { width: 100%; max-width: 380px; aspect-ratio: 1 / 1; position: relative; margin: 20px 0; }
+    canvas { width: 100%; height: 100%; display: block; background-color: #fff; border: 10px solid #2c3e50; border-radius: 50%; box-shadow: 0 15px 40px rgba(0,0,0,0.25); }
+    .info-card { width: 100%; max-width: 380px; background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(10px); border-radius: 20px; padding: 20px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+    #digital { font-size: 2.2rem; font-weight: 800; color: #2c3e50; margin: 0; font-variant-numeric: tabular-nums; }
+    #date, #location-name { font-size: 0.9rem; color: #5d6d7e; margin-top: 5px; }
+    #location-name { font-style: italic; color: #3498db; }
+    hr { border: 0; border-top: 1px solid rgba(0,0,0,0.1); margin: 15px 0; }
+    .prayer-container { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.9rem; }
+    .next-prayer { grid-column: span 2; background: #e74c3c; color: white; padding: 8px; border-radius: 10px; font-weight: bold; margin-bottom: 5px; }
+    .prayer-row { display: flex; justify-content: space-between; padding: 2px 10px; border-bottom: 1px solid rgba(0,0,0,0.05); }
   </style>
 </head>
 <body>
@@ -109,10 +31,12 @@
 
   <div class="info-card">
     <p id="digital">00:00:00</p>
-    <p id="date">Memuat...</p>
+    <p id="date">Memuat Tanggal...</p>
+    <p id="location-name">Mencari Lokasi...</p>
     <hr>
     <div id="prayer-times" class="prayer-container">
-      </div>
+      <div style="grid-column: span 2;">Mengambil Jadwal Sholat...</div>
+    </div>
   </div>
 
   <script>
@@ -120,8 +44,10 @@
     const ctx = canvas.getContext("2d");
     const digital = document.getElementById("digital");
     const dateDiv = document.getElementById("date");
+    const locationDiv = document.getElementById("location-name");
     const prayerDiv = document.getElementById("prayer-times");
 
+    // --- 1. LOGIKA JAM ANALOG & DIGITAL ---
     function drawClock() {
       const now = new Date();
       const ms = now.getMilliseconds();
@@ -129,14 +55,10 @@
       const min = now.getMinutes() + sec/60;
       const hr = now.getHours() + min/60;
 
-      // Bersihkan canvas
       ctx.clearRect(0, 0, 800, 800);
-      
-      const cx = 400; // titik pusat X (800 / 2)
-      const cy = 400; // titik pusat Y (800 / 2)
-      const radius = 370;
+      const cx = 400, cy = 400, radius = 370;
 
-      // 1. Gambar Penanda Menit & Jam
+      // Penanda & Angka
       for(let i=0; i<60; i++) {
         let ang = i * Math.PI/30;
         let isHour = i % 5 === 0;
@@ -148,40 +70,27 @@
         ctx.stroke();
       }
 
-      // 2. Gambar Angka Jam
       ctx.font = "bold 60px Arial";
       ctx.fillStyle = "#2c3e50";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
       for(let num=1; num<=12; num++) {
         let ang = (num * Math.PI/6) - Math.PI/2;
         ctx.fillText(num.toString(), cx + Math.cos(ang) * 280, cy + Math.sin(ang) * 280);
       }
 
-      // 3. Nama Pemilik (Custom Label)
       ctx.font = "italic 28px Georgia";
       ctx.fillStyle = "#95a5a6";
       ctx.fillText("Syakila Azzahra P", cx, cy + 110);
 
-      // 4. Gambar Jarum-jarum
-      // Jam
+      // Jarum
       drawHand((hr * Math.PI/6) - Math.PI/2, 220, 18, "#2c3e50");
-      // Menit
       drawHand((min * Math.PI/30) - Math.PI/2, 310, 10, "#34495e");
-      // Detik (Merah)
       drawHand((sec * Math.PI/30) - Math.PI/2, 340, 5, "#e74c3c");
 
-      // 5. Titik Pusat (Pin)
-      ctx.beginPath();
-      ctx.arc(cx, cy, 15, 0, 2*Math.PI);
-      ctx.fillStyle = "#2c3e50";
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(cx, cy, 6, 0, 2*Math.PI);
-      ctx.fillStyle = "#e74c3c";
-      ctx.fill();
+      // Titik Tengah
+      ctx.beginPath(); ctx.arc(cx, cy, 15, 0, 2*Math.PI); ctx.fillStyle = "#2c3e50"; ctx.fill();
+      ctx.beginPath(); ctx.arc(cx, cy, 6, 0, 2*Math.PI); ctx.fillStyle = "#e74c3c"; ctx.fill();
 
-      // Update Teks Digital & Tanggal
       digital.innerText = now.toLocaleTimeString('id-ID', { hour12: false }).replace(/\./g, ':');
       dateDiv.innerText = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -189,29 +98,64 @@
     }
 
     function drawHand(angle, length, width, color) {
-      ctx.beginPath();
-      ctx.lineWidth = width;
-      ctx.lineCap = "round";
-      ctx.strokeStyle = color;
-      ctx.moveTo(400, 400); // Mulai dari pusat 400, 400
+      ctx.beginPath(); ctx.lineWidth = width; ctx.lineCap = "round"; ctx.strokeStyle = color;
+      ctx.moveTo(400, 400);
       ctx.lineTo(400 + Math.cos(angle) * length, 400 + Math.sin(angle) * length);
       ctx.stroke();
     }
 
-    function updatePrayers() {
-      const prayerTimes = { Subuh: "04:49", Dzuhur: "12:10", Ashar: "15:12", Maghrib: "18:13", Isya: "19:22" };
+    // --- 2. LOGIKA LOKASI & API JADWAL SHOLAT ---
+    async function getPrayerTimes() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(async (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          locationDiv.innerText = `Koordinat: ${lat.toFixed(2)}, ${lng.toFixed(2)}`;
+
+          try {
+            const response = await fetch(`https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lng}&method=20`);
+            const data = await response.json();
+            const timings = data.data.timings;
+            
+            displayPrayers({
+              Subuh: timings.Fajr,
+              Dzuhur: timings.Dhuhr,
+              Ashar: timings.Asr,
+              Maghrib: timings.Maghrib,
+              Isya: timings.Isha
+            });
+          } catch (err) {
+            prayerDiv.innerHTML = "Gagal mengambil data API.";
+          }
+        }, () => {
+          locationDiv.innerText = "Lokasi ditolak. Menggunakan estimasi Jakarta.";
+          fetchDefaultJakarta();
+        });
+      } else {
+        locationDiv.innerText = "Browser tidak dukung GPS.";
+      }
+    }
+
+    async function fetchDefaultJakarta() {
+      // Fallback jika GPS dimatikan (Jakarta)
+      const res = await fetch(`https://api.aladhan.com/v1/timingsByCity?city=Jakarta&country=Indonesia&method=20`);
+      const data = await res.json();
+      const t = data.data.timings;
+      displayPrayers({ Subuh: t.Fajr, Dzuhur: t.Dhuhr, Ashar: t.Asr, Maghrib: t.Maghrib, Isya: t.Isha });
+    }
+
+    function displayPrayers(times) {
       const now = new Date();
       const currentMin = now.getHours() * 60 + now.getMinutes();
-      
       let html = "";
       let foundNext = false;
 
-      for (let [name, time] of Object.entries(prayerTimes)) {
+      for (let [name, time] of Object.entries(times)) {
         let [h, m] = time.split(":").map(Number);
         let pMin = h * 60 + m;
 
         if (!foundNext && pMin > currentMin) {
-          html += `<div class="next-prayer-highlight">Selanjutnya: ${name} (${time})</div>`;
+          html += `<div class="next-prayer">Selanjutnya: ${name} (${time})</div>`;
           foundNext = true;
         } else {
           html += `<div class="prayer-row"><span>${name}</span> <span>${time}</span></div>`;
@@ -220,9 +164,9 @@
       prayerDiv.innerHTML = html;
     }
 
-    // Jalankan
-    updatePrayers();
-    setInterval(updatePrayers, 60000); // Perbarui info sholat tiap menit
+    // Jalankan pertama kali
+    getPrayerTimes();
+    setInterval(getPrayerTimes, 1800000); // Perbarui API setiap 30 menit
     requestAnimationFrame(drawClock);
   </script>
 </body>
