@@ -120,9 +120,10 @@
         ctx.fillText(num.toString(), cx + Math.cos(ang) * 280, cy + Math.sin(ang) * 280);
       }
 
+      // POSISI BARU: Merek jam dipindahkan ke atas (cy - 110)
       ctx.font = "bold italic 30px Georgia";
       ctx.fillStyle = "#2c3e50";
-      ctx.fillText("Syakila Azzahra P", cx, cy + 110);
+      ctx.fillText("Syakila Azzahra P", cx, cy - 110);
 
       drawHand((hr * Math.PI/6) - Math.PI/2, 220, 18, "#2c3e50");
       drawHand((min * Math.PI/30) - Math.PI/2, 310, 10, "#34495e");
@@ -149,7 +150,6 @@
         navigator.geolocation.getCurrentPosition(async (position) => {
           const lat = position.coords.latitude;
           const lng = position.coords.longitude;
-          // Tampilan teks diperbarui agar lebih elegan
           coordsDiv.innerText = `Terhubung ke KEMENAG RI (${lat.toFixed(2)}, ${lng.toFixed(2)})`;
 
           try {
@@ -200,18 +200,3 @@
         let pMin = h * 60 + m;
 
         if (!foundNext && pMin > currentMin) {
-          html += `<div class="next-prayer">Selanjutnya: ${name} (${time})</div>`;
-          foundNext = true;
-        } else {
-          html += `<div class="prayer-row"><span>${name}</span> <span>${time}</span></div>`;
-        }
-      }
-      prayerDiv.innerHTML = html;
-    }
-
-    getPrayerData();
-    setInterval(getPrayerData, 1800000); 
-    requestAnimationFrame(drawClock);
-  </script>
-</body>
-</html>
