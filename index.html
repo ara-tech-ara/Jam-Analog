@@ -50,10 +50,9 @@
     #digital { font-size: 2.2rem; font-weight: 800; color: #2c3e50; margin: 0; font-variant-numeric: tabular-nums; }
     #date { font-size: 0.9rem; color: #5d6d7e; margin-top: 5px; }
 
-    /* WARNA BARU: Biru Elegan untuk Status GPS */
     #location-coords { 
       font-size: 0.8rem; 
-      color: #2980b9; /* Biru elegan (Steel Blue) */
+      color: #2980b9; 
       margin-top: 10px; 
       font-weight: 600; 
       letter-spacing: 0.3px;
@@ -61,7 +60,26 @@
 
     hr { border: 0; border-top: 1px solid rgba(0,0,0,0.1); margin: 15px 0; }
     .prayer-container { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.9rem; }
-    .next-prayer { grid-column: span 2; background: #e74c3c; color: white; padding: 8px; border-radius: 10px; font-weight: bold; margin-bottom: 5px; }
+    
+    .next-prayer { 
+      grid-column: span 2; 
+      background: #e74c3c; 
+      color: white; 
+      padding: 10px; 
+      border-radius: 12px; 
+      font-weight: bold; 
+      margin-bottom: 5px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .countdown-text {
+      font-size: 0.75rem;
+      font-weight: normal;
+      opacity: 0.9;
+    }
+
     .prayer-row { display: flex; justify-content: space-between; padding: 4px 10px; border-bottom: 1px solid rgba(0,0,0,0.05); }
   </style>
 </head>
@@ -90,6 +108,8 @@
     const dateDiv = document.getElementById("date");
     const coordsDiv = document.getElementById("location-coords");
     const prayerDiv = document.getElementById("prayer-times");
+    
+    let currentPrayerTimings = null;
 
     function drawClock() {
       const now = new Date();
@@ -120,7 +140,6 @@
         ctx.fillText(num.toString(), cx + Math.cos(ang) * 280, cy + Math.sin(ang) * 280);
       }
 
-      // POSISI BARU: Merek jam dipindahkan ke atas (cy - 110)
       ctx.font = "bold italic 30px Georgia";
       ctx.fillStyle = "#2c3e50";
       ctx.fillText("Syakila Azzahra P", cx, cy - 110);
@@ -134,6 +153,9 @@
 
       digital.innerText = now.toLocaleTimeString('id-ID', { hour12: false }).replace(/\./g, ':');
       dateDiv.innerText = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+      // Update tampilan jadwal setiap detik agar countdown berjalan lancar
+      if (currentPrayerTimings) displayPrayers(currentPrayerTimings);
 
       requestAnimationFrame(drawClock);
     }
@@ -156,7 +178,7 @@
             const url = `https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lng}&method=99&methodSettings=20,null,18`;
             const response = await fetch(url);
             const data = await response.json();
-            displayPrayers(data.data.timings);
+            currentPrayerTimings = data.data.timings;
           } catch (err) {
             prayerDiv.innerHTML = "Gagal memuat jadwal.";
           }
@@ -170,7 +192,7 @@
     async function fetchDefaultJakarta() {
       const res = await fetch(`https://api.aladhan.com/v1/timingsByCity?city=Jakarta&country=Indonesia&method=20`);
       const data = await res.json();
-      displayPrayers(data.data.timings);
+      currentPrayerTimings = data.data.timings;
     }
 
     function addMinutes(timeStr, minsToAdd) {
@@ -191,21 +213,37 @@
       };
 
       const now = new Date();
-      const currentMin = now.getHours() * 60 + now.getMinutes();
+      const currentTotalSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
       let html = "";
       let foundNext = false;
 
       for (let [name, time] of Object.entries(times)) {
         let [h, m] = time.split(":").map(Number);
-        let pMin = h * 60 + m;
+        let prayerTotalSec = h * 3600 + m * 60;
 
-        if (!foundNext && pMin > currentMin) {
-          html += `<div class="next-prayer">Selanjutnya: ${name} (${time})</div>`;
+        if (!foundNext && prayerTotalSec > currentTotalSec) {
+          // Hitung Mundur
+          let diffSec = prayerTotalSec - currentTotalSec;
+          let diffH = Math.floor(diffSec / 3600);
+          let diffM = Math.floor((diffSec % 3600) / 60);
+          
+          let countdownStr = diffH > 0 ? `${diffH} jam ${diffM} menit lagi` : `${diffM} menit lagi`;
+          
+          html += `<div class="next-prayer">
+                    <span>Selanjutnya: ${name} (${time})</span>
+                    <span class="countdown-text">${countdownStr}</span>
+                  </div>`;
           foundNext = true;
         } else {
           html += `<div class="prayer-row"><span>${name}</span> <span>${time}</span></div>`;
         }
       }
+      
+      // Jika semua waktu sholat hari ini sudah lewat, tampilkan Subuh besok (estimasi sederhana)
+      if (!foundNext) {
+        html += `<div class="next-prayer">Menunggu Waktu Subuh</div>`;
+      }
+
       prayerDiv.innerHTML = html;
     }
 
