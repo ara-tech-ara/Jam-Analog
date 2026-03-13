@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Jam Syakila - Koreksi Waktu</title>
+  <title>Jam Syakila - KEMENAG RI</title>
   <style>
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body {
@@ -32,10 +32,10 @@
   <div class="info-card">
     <p id="digital">00:00:00</p>
     <p id="date">Memuat Tanggal...</p>
-    <p id="location-coords">Menyesuaikan Waktu...</p>
+    <p id="location-coords">Sinkronisasi GPS...</p>
     <hr>
     <div id="prayer-times" class="prayer-container">
-      <div style="grid-column: span 2;">Sinkronisasi Jadwal...</div>
+      <div style="grid-column: span 2;">Sinkronisasi KEMENAG...</div>
     </div>
   </div>
 
@@ -47,9 +47,7 @@
     const coordsDiv = document.getElementById("location-coords");
     const prayerDiv = document.getElementById("prayer-times");
 
-    // KUNCI KOREKSI: Kurangi 2 menit
-    const MINUTE_ADJUSTMENT = -2;
-
+    // 1. Gambar Jam Analog
     function drawClock() {
       const now = new Date();
       const ms = now.getMilliseconds();
@@ -103,49 +101,54 @@
       ctx.stroke();
     }
 
-    // Fungsi pembantu untuk menambah/kurang menit pada string "HH:MM"
-    function adjustTime(timeStr, minutesToChange) {
-      let [hours, minutes] = timeStr.split(':').map(Number);
-      let date = new Date();
-      date.setHours(hours);
-      date.setMinutes(minutes + minutesToChange);
-      
-      let newH = String(date.getHours()).padStart(2, '0');
-      let newM = String(date.getMinutes()).padStart(2, '0');
-      return `${newH}:${newM}`;
-    }
-
+    // 2. Logika API & Penambahan Waktu
     async function getPrayerData() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(async (position) => {
           const lat = position.coords.latitude;
           const lng = position.coords.longitude;
-          coordsDiv.innerText = `KEMENAG RI (Koreksi ${MINUTE_ADJUSTMENT}m)`;
+          coordsDiv.innerText = `Terhubung ke KEMENAG RI (${lat.toFixed(2)}, ${lng.toFixed(2)})`;
 
           try {
             const url = `https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lng}&method=99&methodSettings=20,null,18`;
             const response = await fetch(url);
             const data = await response.json();
-            
-            const raw = data.data.timings;
-            // Terapkan koreksi menit
-            const adjustedTimings = {
-              Subuh: adjustTime(raw.Fajr, MINUTE_ADJUSTMENT),
-              Dzuhur: adjustTime(raw.Dhuhr, MINUTE_ADJUSTMENT),
-              Ashar: adjustTime(raw.Asr, MINUTE_ADJUSTMENT),
-              Maghrib: adjustTime(raw.Maghrib, MINUTE_ADJUSTMENT),
-              Isya: adjustTime(raw.Isha, MINUTE_ADJUSTMENT)
-            };
-            
-            displayPrayers(adjustedTimings);
+            displayPrayers(data.data.timings);
           } catch (err) {
             prayerDiv.innerHTML = "Gagal memuat jadwal.";
           }
+        }, () => {
+          coordsDiv.innerText = "GPS Mati. Menggunakan Jakarta.";
+          fetchDefaultJakarta();
         });
       }
     }
 
-    function displayPrayers(times) {
+    async function fetchDefaultJakarta() {
+      const res = await fetch(`https://api.aladhan.com/v1/timingsByCity?city=Jakarta&country=Indonesia&method=20`);
+      const data = await res.json();
+      displayPrayers(data.data.timings);
+    }
+
+    // Fungsi untuk menambah menit pada string waktu "HH:MM"
+    function addMinutes(timeStr, minsToAdd) {
+      let [h, m] = timeStr.split(':').map(Number);
+      let date = new Date();
+      date.setHours(h, m + minsToAdd, 0);
+      return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':');
+    }
+
+    function displayPrayers(timings) {
+      // Menambahkan 2 menit pada setiap waktu sholat
+      const adj = 2; 
+      const times = { 
+        Subuh: addMinutes(timings.Fajr, adj), 
+        Dzuhur: addMinutes(timings.Dhuhr, adj), 
+        Ashar: addMinutes(timings.Asr, adj), 
+        Maghrib: addMinutes(timings.Maghrib, adj), 
+        Isya: addMinutes(timings.Isha, adj) 
+      };
+
       const now = new Date();
       const currentMin = now.getHours() * 60 + now.getMinutes();
       let html = "";
