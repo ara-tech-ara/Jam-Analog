@@ -44,9 +44,10 @@
       // lingkaran jam
       ctx.beginPath();
       ctx.arc(150,150,140,0,2*Math.PI);
+      ctx.strokeStyle = "black"; // lingkaran luar hitam
       ctx.stroke();
 
-      // garis menit/jam (tick marks) rata dengan lingkaran luar
+      // garis menit/jam (tick marks)
       for(let i=0; i<60; i++){
         let ang = i * Math.PI/30;
         let inner = (i % 5 === 0) ? 130 : 135;
@@ -63,7 +64,7 @@
         ctx.stroke();
       }
 
-      // angka 1-12 lebih besar + bayangan tipis
+      // angka 1-12 lebih besar & dirapatkan ke garis
       ctx.font = "22px Arial";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
@@ -74,11 +75,10 @@
       ctx.shadowOffsetY = 2;
       for(let num=1; num<=12; num++){
         let ang = num * Math.PI/6;
-        let x = 150 + Math.cos(ang - Math.PI/2) * 100;
-        let y = 150 + Math.sin(ang - Math.PI/2) * 100;
+        let x = 150 + Math.cos(ang - Math.PI/2) * 115; // lebih dekat ke garis
+        let y = 150 + Math.sin(ang - Math.PI/2) * 115;
         ctx.fillText(num.toString(), x, y);
       }
-      // reset shadow agar tidak mempengaruhi jarum
       ctx.shadowColor = "transparent";
 
       // jarum jam
@@ -93,10 +93,10 @@
       let secAng = sec * Math.PI/30;
       drawHand(secAng, 110, 2, "red");
 
-      // lingkaran pusat jarum
+      // titik pusat jarum warna merah
       ctx.beginPath();
       ctx.arc(150,150,5,0,2*Math.PI);
-      ctx.fillStyle = "black";
+      ctx.fillStyle = "red";
       ctx.fill();
 
       // jam digital + hari + tanggal
