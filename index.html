@@ -200,3 +200,18 @@
         let pMin = h * 60 + m;
 
         if (!foundNext && pMin > currentMin) {
+          html += `<div class="next-prayer">Selanjutnya: ${name} (${time})</div>`;
+          foundNext = true;
+        } else {
+          html += `<div class="prayer-row"><span>${name}</span> <span>${time}</span></div>`;
+        }
+      }
+      prayerDiv.innerHTML = html;
+    }
+
+    getPrayerData();
+    setInterval(getPrayerData, 1800000); 
+    requestAnimationFrame(drawClock);
+  </script>
+</body>
+</html>
