@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Jam Syakila - Lokasi Otomatis</title>
+  <title>Jam Syakila - KEMENAG RI</title>
   <style>
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body {
@@ -16,8 +16,7 @@
     .info-card { width: 100%; max-width: 380px; background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(10px); border-radius: 20px; padding: 20px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
     #digital { font-size: 2.2rem; font-weight: 800; color: #2c3e50; margin: 0; font-variant-numeric: tabular-nums; }
     #date { font-size: 0.9rem; color: #5d6d7e; margin-top: 5px; }
-    #location-coords { font-size: 0.75rem; color: #7f8c8d; margin-top: 5px; }
-    #region-name { font-size: 1rem; color: #2980b9; font-weight: bold; margin-top: 2px; }
+    #location-coords { font-size: 0.75rem; color: #7f8c8d; margin-top: 8px; font-weight: bold; }
     hr { border: 0; border-top: 1px solid rgba(0,0,0,0.1); margin: 15px 0; }
     .prayer-container { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.9rem; }
     .next-prayer { grid-column: span 2; background: #e74c3c; color: white; padding: 8px; border-radius: 10px; font-weight: bold; margin-bottom: 5px; }
@@ -33,11 +32,10 @@
   <div class="info-card">
     <p id="digital">00:00:00</p>
     <p id="date">Memuat Tanggal...</p>
-    <p id="location-coords">Mendeteksi GPS...</p>
-    <p id="region-name">Mencari Wilayah...</p>
+    <p id="location-coords">Sinkronisasi GPS...</p>
     <hr>
     <div id="prayer-times" class="prayer-container">
-      <div style="grid-column: span 2;">Sinkronisasi KEMENAG...</div>
+      <div style="grid-column: span 2;">Memuat Jadwal KEMENAG...</div>
     </div>
   </div>
 
@@ -47,7 +45,6 @@
     const digital = document.getElementById("digital");
     const dateDiv = document.getElementById("date");
     const coordsDiv = document.getElementById("location-coords");
-    const regionDiv = document.getElementById("region-name");
     const prayerDiv = document.getElementById("prayer-times");
 
     function drawClock() {
@@ -60,6 +57,7 @@
       ctx.clearRect(0, 0, 800, 800);
       const cx = 400, cy = 400, radius = 370;
 
+      // Penanda Menit & Jam
       for(let i=0; i<60; i++) {
         let ang = i * Math.PI/30;
         let isHour = i % 5 === 0;
@@ -71,6 +69,7 @@
         ctx.stroke();
       }
 
+      // Angka Jam
       ctx.font = "bold 65px Arial";
       ctx.fillStyle = "#2c3e50";
       ctx.textAlign = "center"; ctx.textBaseline = "middle";
@@ -79,15 +78,17 @@
         ctx.fillText(num.toString(), cx + Math.cos(ang) * 280, cy + Math.sin(ang) * 280);
       }
 
-      // PERUBAHAN: Nama diperbesar (35px) dan dihitamkan (#000)
-      ctx.font = "bold italic 35px Georgia";
-      ctx.fillStyle = "#000000";
+      // MEREK JAM: Warna disamakan (#2c3e50), ukuran 30px (sedikit diperkecil)
+      ctx.font = "bold italic 30px Georgia";
+      ctx.fillStyle = "#2c3e50";
       ctx.fillText("Syakila Azzahra P", cx, cy + 110);
 
+      // Jarum Jam
       drawHand((hr * Math.PI/6) - Math.PI/2, 220, 18, "#2c3e50");
       drawHand((min * Math.PI/30) - Math.PI/2, 310, 10, "#34495e");
       drawHand((sec * Math.PI/30) - Math.PI/2, 340, 5, "#e74c3c");
 
+      // Titik Pusat
       ctx.beginPath(); ctx.arc(cx, cy, 15, 0, 2*Math.PI); ctx.fillStyle = "#2c3e50"; ctx.fill();
       ctx.beginPath(); ctx.arc(cx, cy, 6, 0, 2*Math.PI); ctx.fillStyle = "#e74c3c"; ctx.fill();
 
@@ -104,34 +105,24 @@
       ctx.stroke();
     }
 
-    async function getData() {
+    async function getPrayerData() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(async (position) => {
           const lat = position.coords.latitude;
           const lng = position.coords.longitude;
-          coordsDiv.innerText = `Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`;
+          coordsDiv.innerText = `Terhubung ke KEMENAG RI (${lat.toFixed(2)}, ${lng.toFixed(2)})`;
 
-          // Ambil Nama Wilayah (Reverse Geocoding)
           try {
-            const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
-            const geoData = await geoRes.json();
-            const city = geoData.address.city || geoData.address.town || geoData.address.municipality || "Wilayah Tidak Dikenal";
-            regionDiv.innerText = city;
-          } catch (e) {
-            regionDiv.innerText = "Gagal memuat nama daerah";
-          }
-
-          // Ambil Jadwal Sholat KEMENAG
-          try {
+            // Parameter KEMENAG: Subuh 20, Isya 18
             const url = `https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lng}&method=99&methodSettings=20,null,18`;
             const response = await fetch(url);
             const data = await response.json();
             displayPrayers(data.data.timings);
           } catch (err) {
-            prayerDiv.innerHTML = "Gagal memuat jadwal";
+            prayerDiv.innerHTML = "Gagal memuat jadwal.";
           }
         }, () => {
-          regionDiv.innerText = "GPS tidak aktif";
+          coordsDiv.innerText = "GPS Mati. Menggunakan Estimasi Jakarta.";
           fetchDefaultJakarta();
         });
       }
@@ -140,7 +131,6 @@
     async function fetchDefaultJakarta() {
       const res = await fetch(`https://api.aladhan.com/v1/timingsByCity?city=Jakarta&country=Indonesia&method=20`);
       const data = await res.json();
-      regionDiv.innerText = "Jakarta (Default)";
       displayPrayers(data.data.timings);
     }
 
@@ -165,8 +155,8 @@
       prayerDiv.innerHTML = html;
     }
 
-    getData();
-    setInterval(getData, 1800000); 
+    getPrayerData();
+    setInterval(getPrayerData, 1800000); 
     requestAnimationFrame(drawClock);
   </script>
 </body>
