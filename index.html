@@ -5,107 +5,38 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Jam & Waktu Sholat - Syakila Azzahra P</title>
   <style>
+    /* ... (Style tetap sama seperti sebelumnya) ... */
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    
     body {
       margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center;
       min-height: 100vh; font-family: 'Segoe UI', Roboto, sans-serif;
-      background: #74ebd5; 
-      transition: background 1s ease-in-out; 
-      color: #333;
+      background: #74ebd5; transition: background 1s ease-in-out; color: #333;
     }
-
-    .clock-outer-container {
-      width: 100%;
-      max-width: 380px;
-      padding: 10px;
-    }
-
-    .clock-wrapper {
-      width: 100%;
-      aspect-ratio: 1 / 1;
-      position: relative;
-    }
-
-    canvas {
-      width: 100%;
-      height: 100%;
-      display: block;
-      background-color: #fff;
-      border: 10px solid #2c3e50;
-      border-radius: 50%;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    }
-
-    .info-card {
-      width: 100%;
-      max-width: 380px;
-      background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(10px);
-      border-radius: 20px;
-      padding: 20px;
-      text-align: center;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-      margin-top: 10px;
-    }
-
+    .clock-outer-container { width: 100%; max-width: 380px; padding: 10px; }
+    .clock-wrapper { width: 100%; aspect-ratio: 1 / 1; position: relative; }
+    canvas { width: 100%; height: 100%; display: block; background-color: #fff; border: 10px solid #2c3e50; border-radius: 50%; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+    .info-card { width: 100%; max-width: 380px; background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(10px); border-radius: 20px; padding: 20px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-top: 10px; }
     #digital { font-size: 2.2rem; font-weight: 800; color: #2c3e50; margin: 0; font-variant-numeric: tabular-nums; }
     #date { font-size: 0.9rem; color: #5d6d7e; margin-top: 5px; }
-
-    #location-coords { 
-      font-size: 0.75rem; 
-      color: #2980b9; 
-      margin-top: 10px; 
-      font-weight: 600; 
-    }
-
+    #location-coords { font-size: 0.75rem; color: #2980b9; margin-top: 10px; font-weight: 600; }
     hr { border: 0; border-top: 1px solid rgba(0,0,0,0.1); margin: 15px 0; }
-
-    /* Container Grid Utama */
-    .prayer-container { 
-      display: grid; 
-      grid-template-columns: 1fr 1fr; 
-      gap: 10px; 
-      font-size: 0.9rem; 
-      text-align: left;
-    }
-    
-    /* Kotak Jadwal Selanjutnya (Full Width di Atas) */
-    .next-prayer { 
-      grid-column: span 2; 
-      background: #e74c3c; 
-      color: white; 
-      padding: 15px; 
-      border-radius: 15px; 
-      font-weight: bold; 
-      margin-bottom: 5px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3);
-    }
-
-    .countdown-text {
-      font-size: 0.8rem;
-      font-weight: normal;
-      opacity: 0.9;
-    }
-
-    /* Baris Jadwal Biasa (Kiri & Kanan) */
-    .prayer-row { 
-      display: flex; 
-      justify-content: space-between; 
-      padding: 10px 8px; 
-      background: rgba(0,0,0,0.03);
-      border-radius: 8px;
-      border-bottom: 2px solid rgba(0,0,0,0.05); 
-    }
-
+    .prayer-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9rem; text-align: left; }
+    .next-prayer { grid-column: span 2; background: #e74c3c; color: white; padding: 15px; border-radius: 15px; font-weight: bold; margin-bottom: 5px; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3); }
+    .countdown-text { font-size: 0.8rem; font-weight: normal; opacity: 0.9; }
+    .prayer-row { display: flex; justify-content: space-between; padding: 10px 8px; background: rgba(0,0,0,0.03); border-radius: 8px; border-bottom: 2px solid rgba(0,0,0,0.05); }
     .prayer-row span:first-child { font-weight: 600; color: #555; }
+    
+    /* Tambahan Tombol Aktivasi Suara */
+    #audio-status {
+      font-size: 0.7rem; color: #e67e22; margin-bottom: 10px; cursor: pointer;
+      background: #fef5e7; padding: 5px 10px; border-radius: 10px; border: 1px solid #f39c12;
+    }
   </style>
 </head>
 <body>
+
+  <!-- Klik ini sekali saat web dibuka agar browser mengizinkan suara -->
+  <div id="audio-status" onclick="enableAudio()">🔔 Klik untuk Aktifkan Suara Adzan</div>
 
   <div class="clock-outer-container">
     <div class="clock-wrapper">
@@ -123,6 +54,11 @@
     </div>
   </div>
 
+  <!-- Sound Element (Adzan Pendek) -->
+  <audio id="adzan-audio" preload="auto">
+    <source src="https://www.islamcan.com/audio/adhan/azan1.mp3" type="audio/mpeg">
+  </audio>
+
   <script>
     const canvas = document.getElementById("clock");
     const ctx = canvas.getContext("2d");
@@ -130,31 +66,42 @@
     const dateDiv = document.getElementById("date");
     const coordsDiv = document.getElementById("location-coords");
     const prayerDiv = document.getElementById("prayer-times");
+    const audioStatus = document.getElementById("audio-status");
+    const adzanAudio = document.getElementById("adzan-audio");
     
     let currentPrayerTimings = null;
+    let audioEnabled = false;
+    let lastPlayedMinute = ""; // Agar suara tidak berulang-ulang di menit yang sama
 
-    // 1. Fungsi Background Harian
-    function updateDailyBackground() {
-      const colors = [
-        "linear-gradient(135deg, #FF9A8B 0%, #FF6A88 55%, #FF99AC 100%)", // Minggu
-        "linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)",             // Senin
-        "linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%)",             // Selasa
-        "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",             // Rabu
-        "linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)",             // Kamis
-        "linear-gradient(135deg, #fccb90 0%, #d57eeb 100%)",             // Jumat
-        "linear-gradient(135deg, #e6e9f0 0%, #eef1f5 100%)"              // Sabtu
-      ];
-      const today = new Date().getDay();
-      document.body.style.background = colors[today];
+    // Fungsi Aktifkan Audio (Penting karena aturan browser modern)
+    function enableAudio() {
+      adzanAudio.play().then(() => {
+        adzanAudio.pause(); // Tes putar lalu pause
+        adzanAudio.currentTime = 0;
+        audioEnabled = true;
+        audioStatus.innerHTML = "✅ Suara Adzan Aktif";
+        audioStatus.style.color = "#27ae60";
+        audioStatus.style.background = "#e9f7ef";
+        audioStatus.style.border = "1px solid #27ae60";
+      }).catch(e => console.log("Audio diblokir browser"));
     }
 
-    // 2. Fungsi Gambar Jam Analog
+    function updateDailyBackground() {
+      const colors = ["#FF9A8B", "#a1c4fd", "#d4fc79", "#f093fb", "#84fab0", "#fccb90", "#e6e9f0"];
+      document.body.style.background = `linear-gradient(135deg, ${colors[new Date().getDay()]} 0%, #ffffff 100%)`;
+    }
+
     function drawClock() {
       const now = new Date();
       const ms = now.getMilliseconds();
-      const sec = now.getSeconds() + ms/1000;
-      const min = now.getMinutes() + sec/60;
-      const hr = now.getHours() + min/60;
+      const sec = now.getSeconds();
+      const min = now.getMinutes();
+      const hr = now.getHours();
+
+      // Logika Cek Waktu Adzan (Hanya jalan jika audio aktif & detik ke-0)
+      if (audioEnabled && sec === 0) {
+        checkAndPlayAdzan(hr, min);
+      }
 
       ctx.clearRect(0, 0, 800, 800);
       const cx = 400, cy = 400, radius = 370;
@@ -182,9 +129,9 @@
       ctx.fillStyle = "#2c3e50";
       ctx.fillText("Syakila Azzahra P", cx, cy - 110);
 
-      drawHand((hr * Math.PI/6) - Math.PI/2, 220, 18, "#2c3e50");
-      drawHand((min * Math.PI/30) - Math.PI/2, 310, 10, "#34495e");
-      drawHand((sec * Math.PI/30) - Math.PI/2, 340, 5, "#e74c3c");
+      drawHand(((hr + min/60) * Math.PI/6) - Math.PI/2, 220, 18, "#2c3e50");
+      drawHand(((min + sec/60) * Math.PI/30) - Math.PI/2, 310, 10, "#34495e");
+      drawHand(((sec + ms/1000) * Math.PI/30) - Math.PI/2, 340, 5, "#e74c3c");
 
       ctx.beginPath(); ctx.arc(cx, cy, 15, 0, 2*Math.PI); ctx.fillStyle = "#2c3e50"; ctx.fill();
       ctx.beginPath(); ctx.arc(cx, cy, 6, 0, 2*Math.PI); ctx.fillStyle = "#e74c3c"; ctx.fill();
@@ -193,7 +140,6 @@
       dateDiv.innerText = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
       if (currentPrayerTimings) displayPrayers(currentPrayerTimings);
-
       requestAnimationFrame(drawClock);
     }
 
@@ -204,26 +150,44 @@
       ctx.stroke();
     }
 
-    // 3. Fungsi Ambil Data Sholat
+    function checkAndPlayAdzan(h, m) {
+      if (!currentPrayerTimings) return;
+      const timeNow = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+      
+      const adj = 2; 
+      const prayerTimes = [
+        addMinutes(currentPrayerTimings.Fajr, adj),
+        addMinutes(currentPrayerTimings.Dhuhr, adj),
+        addMinutes(currentPrayerTimings.Asr, adj),
+        addMinutes(currentPrayerTimings.Maghrib, adj),
+        addMinutes(currentPrayerTimings.Isha, adj)
+      ];
+
+      if (prayerTimes.includes(timeNow) && lastPlayedMinute !== timeNow) {
+        lastPlayedMinute = timeNow;
+        adzanAudio.currentTime = 0;
+        adzanAudio.play();
+        
+        // Matikan suara setelah 8 detik (Hanya "Allahu Akbar Allahu Akbar")
+        setTimeout(() => {
+          adzanAudio.pause();
+        }, 8000); 
+      }
+    }
+
     async function getPrayerData() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(async (position) => {
           const lat = position.coords.latitude;
           const lng = position.coords.longitude;
           coordsDiv.innerText = `Terhubung ke KEMENAG RI (${lat.toFixed(2)}, ${lng.toFixed(2)})`;
-
           try {
             const url = `https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lng}&method=99&methodSettings=20,null,18`;
             const response = await fetch(url);
             const data = await response.json();
             currentPrayerTimings = data.data.timings;
-          } catch (err) {
-            prayerDiv.innerHTML = "<div style='grid-column:span 2'>Gagal memuat jadwal.</div>";
-          }
-        }, () => {
-          coordsDiv.innerText = "GPS Tidak Aktif";
-          fetchDefaultJakarta();
-        });
+          } catch (err) { console.log("Gagal API"); }
+        }, () => fetchDefaultJakarta());
       }
     }
 
@@ -240,52 +204,30 @@
       return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':');
     }
 
-    // 4. Fungsi Tampilkan Jadwal (Struktur Baru)
     function displayPrayers(timings) {
       const adj = 2; 
-      const times = { 
-        Subuh: addMinutes(timings.Fajr, adj), 
-        Dzuhur: addMinutes(timings.Dhuhr, adj), 
-        Ashar: addMinutes(timings.Asr, adj), 
-        Maghrib: addMinutes(timings.Maghrib, adj), 
-        Isya: addMinutes(timings.Isha, adj) 
-      };
-
+      const times = { Subuh: addMinutes(timings.Fajr, adj), Dzuhur: addMinutes(timings.Dhuhr, adj), Ashar: addMinutes(timings.Asr, adj), Maghrib: addMinutes(timings.Maghrib, adj), Isya: addMinutes(timings.Isha, adj) };
       const now = new Date();
       const currentTotalSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-      
-      let nextHTML = "";
-      let listHTML = "";
-      let foundNext = false;
+      let nextHTML = ""; let listHTML = ""; let foundNext = false;
 
       for (let [name, time] of Object.entries(times)) {
         let [h, m] = time.split(":").map(Number);
         let prayerTotalSec = h * 3600 + m * 60;
-
         if (!foundNext && prayerTotalSec > currentTotalSec) {
           let diffSec = prayerTotalSec - currentTotalSec;
           let diffH = Math.floor(diffSec / 3600);
           let diffM = Math.floor((diffSec % 3600) / 60);
-          let countdownStr = diffH > 0 ? `${diffH} jam ${diffM} menit lagi` : `${diffM} menit lagi`;
-          
-          nextHTML = `<div class="next-prayer">
-                        <span>Selanjutnya: ${name} (${time})</span>
-                        <span class="countdown-text">${countdownStr}</span>
-                      </div>`;
+          nextHTML = `<div class="next-prayer"><span>Selanjutnya: ${name} (${time})</span><span class="countdown-text">${diffH > 0 ? diffH + ' jam ' : ''}${diffM} menit lagi</span></div>`;
           foundNext = true;
         } else {
           listHTML += `<div class="prayer-row"><span>${name}</span> <span>${time}</span></div>`;
         }
       }
-      
-      if (!foundNext) {
-        nextHTML = `<div class="next-prayer">Menunggu Waktu Subuh</div>`;
-      }
-
+      if (!foundNext) nextHTML = `<div class="next-prayer">Menunggu Waktu Subuh</div>`;
       prayerDiv.innerHTML = nextHTML + listHTML;
     }
 
-    // Jalankan Semua
     updateDailyBackground();
     getPrayerData();
     setInterval(getPrayerData, 1800000); 
