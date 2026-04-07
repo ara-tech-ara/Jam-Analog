@@ -10,7 +10,10 @@
     body {
       margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center;
       min-height: 100vh; font-family: 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #74ebd5 0%, #ACB6E5 100%); color: #333;
+      /* Background default jika JS gagal dimuat */
+      background: #74ebd5; 
+      transition: background 1s ease-in-out; /* Transisi halus saat warna berubah */
+      color: #333;
     }
 
     .clock-outer-container {
@@ -111,6 +114,21 @@
     
     let currentPrayerTimings = null;
 
+    // FUNGSI GANTI BACKGROUND TIAP HARI
+    function updateDailyBackground() {
+      const colors = [
+        "linear-gradient(135deg, #FF9A8B 0%, #FF6A88 55%, #FF99AC 100%)", // Minggu (Pink Fresh)
+        "linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)",             // Senin (Biru Langit)
+        "linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%)",             // Selasa (Hijau Daun)
+        "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",             // Rabu (Soft Purple)
+        "linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)",             // Kamis (Tosca Blue)
+        "linear-gradient(135deg, #fccb90 0%, #d57eeb 100%)",             // Jumat (Sunset Calm)
+        "linear-gradient(135deg, #e6e9f0 0%, #eef1f5 100%)"              // Sabtu (Minimalist Gray)
+      ];
+      const today = new Date().getDay();
+      document.body.style.background = colors[today];
+    }
+
     function drawClock() {
       const now = new Date();
       const ms = now.getMilliseconds();
@@ -154,7 +172,6 @@
       digital.innerText = now.toLocaleTimeString('id-ID', { hour12: false }).replace(/\./g, ':');
       dateDiv.innerText = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
-      // Update tampilan jadwal setiap detik agar countdown berjalan lancar
       if (currentPrayerTimings) displayPrayers(currentPrayerTimings);
 
       requestAnimationFrame(drawClock);
@@ -222,11 +239,9 @@
         let prayerTotalSec = h * 3600 + m * 60;
 
         if (!foundNext && prayerTotalSec > currentTotalSec) {
-          // Hitung Mundur
           let diffSec = prayerTotalSec - currentTotalSec;
           let diffH = Math.floor(diffSec / 3600);
           let diffM = Math.floor((diffSec % 3600) / 60);
-          
           let countdownStr = diffH > 0 ? `${diffH} jam ${diffM} menit lagi` : `${diffM} menit lagi`;
           
           html += `<div class="next-prayer">
@@ -239,7 +254,6 @@
         }
       }
       
-      // Jika semua waktu sholat hari ini sudah lewat, tampilkan Subuh besok (estimasi sederhana)
       if (!foundNext) {
         html += `<div class="next-prayer">Menunggu Waktu Subuh</div>`;
       }
@@ -247,10 +261,11 @@
       prayerDiv.innerHTML = html;
     }
 
+    // Jalankan fungsi ganti background saat startup
+    updateDailyBackground();
     getPrayerData();
     setInterval(getPrayerData, 1800000); 
     requestAnimationFrame(drawClock);
   </script>
 </body>
 </html>
-
