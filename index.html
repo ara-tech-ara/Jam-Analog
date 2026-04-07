@@ -259,4 +259,37 @@
       let foundNext = false;
 
       for (let [name, time] of Object.entries(times)) {
-        let [h, m] = time.split
+        let [h, m] = time.split(":").map(Number);
+        let prayerTotalSec = h * 3600 + m * 60;
+
+        if (!foundNext && prayerTotalSec > currentTotalSec) {
+          let diffSec = prayerTotalSec - currentTotalSec;
+          let diffH = Math.floor(diffSec / 3600);
+          let diffM = Math.floor((diffSec % 3600) / 60);
+          let countdownStr = diffH > 0 ? `${diffH} jam ${diffM} menit lagi` : `${diffM} menit lagi`;
+          
+          nextHTML = `<div class="next-prayer">
+                        <span>Selanjutnya: ${name} (${time})</span>
+                        <span class="countdown-text">${countdownStr}</span>
+                      </div>`;
+          foundNext = true;
+        } else {
+          listHTML += `<div class="prayer-row"><span>${name}</span> <span>${time}</span></div>`;
+        }
+      }
+      
+      if (!foundNext) {
+        nextHTML = `<div class="next-prayer">Menunggu Waktu Subuh</div>`;
+      }
+
+      prayerDiv.innerHTML = nextHTML + listHTML;
+    }
+
+    // Jalankan Semua
+    updateDailyBackground();
+    getPrayerData();
+    setInterval(getPrayerData, 1800000); 
+    requestAnimationFrame(drawClock);
+  </script>
+</body>
+</html>
