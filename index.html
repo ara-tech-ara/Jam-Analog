@@ -3,16 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Jam & Waktu Sholat - KEMENAG RI Syakila Azzahra P</title>
+  <title>Jam & Waktu Sholat - Syakila Azzahra P</title>
   <style>
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     
     body {
       margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center;
       min-height: 100vh; font-family: 'Segoe UI', Roboto, sans-serif;
-      /* Background default jika JS gagal dimuat */
       background: #74ebd5; 
-      transition: background 1s ease-in-out; /* Transisi halus saat warna berubah */
+      transition: background 1s ease-in-out; 
       color: #333;
     }
 
@@ -54,36 +53,56 @@
     #date { font-size: 0.9rem; color: #5d6d7e; margin-top: 5px; }
 
     #location-coords { 
-      font-size: 0.8rem; 
+      font-size: 0.75rem; 
       color: #2980b9; 
       margin-top: 10px; 
       font-weight: 600; 
-      letter-spacing: 0.3px;
     }
 
     hr { border: 0; border-top: 1px solid rgba(0,0,0,0.1); margin: 15px 0; }
-    .prayer-container { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.9rem; }
+
+    /* Container Grid Utama */
+    .prayer-container { 
+      display: grid; 
+      grid-template-columns: 1fr 1fr; 
+      gap: 10px; 
+      font-size: 0.9rem; 
+      text-align: left;
+    }
     
+    /* Kotak Jadwal Selanjutnya (Full Width di Atas) */
     .next-prayer { 
       grid-column: span 2; 
       background: #e74c3c; 
       color: white; 
-      padding: 10px; 
-      border-radius: 12px; 
+      padding: 15px; 
+      border-radius: 15px; 
       font-weight: bold; 
       margin-bottom: 5px;
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      align-items: center;
+      gap: 4px;
+      box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3);
     }
 
     .countdown-text {
-      font-size: 0.75rem;
+      font-size: 0.8rem;
       font-weight: normal;
       opacity: 0.9;
     }
 
-    .prayer-row { display: flex; justify-content: space-between; padding: 4px 10px; border-bottom: 1px solid rgba(0,0,0,0.05); }
+    /* Baris Jadwal Biasa (Kiri & Kanan) */
+    .prayer-row { 
+      display: flex; 
+      justify-content: space-between; 
+      padding: 10px 8px; 
+      background: rgba(0,0,0,0.03);
+      border-radius: 8px;
+      border-bottom: 2px solid rgba(0,0,0,0.05); 
+    }
+
+    .prayer-row span:first-child { font-weight: 600; color: #555; }
   </style>
 </head>
 <body>
@@ -100,7 +119,7 @@
     <p id="location-coords">Sinkronisasi GPS...</p>
     <hr>
     <div id="prayer-times" class="prayer-container">
-      <div style="grid-column: span 2;">Sinkronisasi KEMENAG...</div>
+      <div style="grid-column: span 2; text-align: center;">Sinkronisasi KEMENAG...</div>
     </div>
   </div>
 
@@ -114,21 +133,22 @@
     
     let currentPrayerTimings = null;
 
-    // FUNGSI GANTI BACKGROUND TIAP HARI
+    // 1. Fungsi Background Harian
     function updateDailyBackground() {
       const colors = [
-        "linear-gradient(135deg, #FF9A8B 0%, #FF6A88 55%, #FF99AC 100%)", // Minggu (Pink Fresh)
-        "linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)",             // Senin (Biru Langit)
-        "linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%)",             // Selasa (Hijau Daun)
-        "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",             // Rabu (Soft Purple)
-        "linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)",             // Kamis (Tosca Blue)
-        "linear-gradient(135deg, #fccb90 0%, #d57eeb 100%)",             // Jumat (Sunset Calm)
-        "linear-gradient(135deg, #e6e9f0 0%, #eef1f5 100%)"              // Sabtu (Minimalist Gray)
+        "linear-gradient(135deg, #FF9A8B 0%, #FF6A88 55%, #FF99AC 100%)", // Minggu
+        "linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)",             // Senin
+        "linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%)",             // Selasa
+        "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",             // Rabu
+        "linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)",             // Kamis
+        "linear-gradient(135deg, #fccb90 0%, #d57eeb 100%)",             // Jumat
+        "linear-gradient(135deg, #e6e9f0 0%, #eef1f5 100%)"              // Sabtu
       ];
       const today = new Date().getDay();
       document.body.style.background = colors[today];
     }
 
+    // 2. Fungsi Gambar Jam Analog
     function drawClock() {
       const now = new Date();
       const ms = now.getMilliseconds();
@@ -184,6 +204,7 @@
       ctx.stroke();
     }
 
+    // 3. Fungsi Ambil Data Sholat
     async function getPrayerData() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(async (position) => {
@@ -197,7 +218,7 @@
             const data = await response.json();
             currentPrayerTimings = data.data.timings;
           } catch (err) {
-            prayerDiv.innerHTML = "Gagal memuat jadwal.";
+            prayerDiv.innerHTML = "<div style='grid-column:span 2'>Gagal memuat jadwal.</div>";
           }
         }, () => {
           coordsDiv.innerText = "GPS Tidak Aktif";
@@ -219,6 +240,7 @@
       return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':');
     }
 
+    // 4. Fungsi Tampilkan Jadwal (Struktur Baru)
     function displayPrayers(timings) {
       const adj = 2; 
       const times = { 
@@ -231,41 +253,10 @@
 
       const now = new Date();
       const currentTotalSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-      let html = "";
+      
+      let nextHTML = "";
+      let listHTML = "";
       let foundNext = false;
 
       for (let [name, time] of Object.entries(times)) {
-        let [h, m] = time.split(":").map(Number);
-        let prayerTotalSec = h * 3600 + m * 60;
-
-        if (!foundNext && prayerTotalSec > currentTotalSec) {
-          let diffSec = prayerTotalSec - currentTotalSec;
-          let diffH = Math.floor(diffSec / 3600);
-          let diffM = Math.floor((diffSec % 3600) / 60);
-          let countdownStr = diffH > 0 ? `${diffH} jam ${diffM} menit lagi` : `${diffM} menit lagi`;
-          
-          html += `<div class="next-prayer">
-                    <span>Selanjutnya: ${name} (${time})</span>
-                    <span class="countdown-text">${countdownStr}</span>
-                  </div>`;
-          foundNext = true;
-        } else {
-          html += `<div class="prayer-row"><span>${name}</span> <span>${time}</span></div>`;
-        }
-      }
-      
-      if (!foundNext) {
-        html += `<div class="next-prayer">Menunggu Waktu Subuh</div>`;
-      }
-
-      prayerDiv.innerHTML = html;
-    }
-
-    // Jalankan fungsi ganti background saat startup
-    updateDailyBackground();
-    getPrayerData();
-    setInterval(getPrayerData, 1800000); 
-    requestAnimationFrame(drawClock);
-  </script>
-</body>
-</html>
+        let [h, m] = time.split
